@@ -134,8 +134,8 @@ dmypy.json
 static/
 
 *.vscode
-*frontend/
-frontend/public/
-.frontend/src/
+.frontend
+frontend/
+
 backend/static/admin/
 backend/static/rest_framework/
