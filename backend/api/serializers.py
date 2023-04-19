@@ -1,9 +1,13 @@
+from django.core.validators import MinValueValidator
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
+from rest_framework.validators import UniqueValidator
 
-from recipes.models import Tag, Recipe, Ingredient, IngredientsInRecipe
-from users.models import Favorite, Follow, ShoppingCart, User
+from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
+                            ShoppingCart, Tag)
+from users.models import Follow, User
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -116,6 +120,12 @@ class IngredientsListingSerializer(serializers.ModelSerializer):
 
 
 class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(
+        max_length=100,
+        validators=[UniqueValidator(
+            queryset=Recipe.objects.all(),
+            message='Рецепт с таким именем уже существует')],
+    )
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
@@ -125,6 +135,14 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         source='ingredients_in_recipe'
     )
     image = Base64ImageField()
+    cooking_time = serializers.IntegerField(
+        validators=(
+            MinValueValidator(
+                1,
+                message='Время приготовления должно быть 1 или более.'
+            ),
+        )
+    )
 
     class Meta:
         model = Recipe
@@ -137,6 +155,22 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
+
+    def validate(self, attrs):
+        if len(attrs['tags']) == 0:
+            raise ValidationError('Рецепт не может быть без тегов!')
+        if len(attrs['tags']) > len(set(attrs['tags'])):
+            raise ValidationError('Теги не могут повторяться!')
+        if len(attrs['ingredients_in_recipe']) == 0:
+            raise ValidationError('Нужно добавить ингредиенты')
+        id_ingredients = []
+        for ingredient in attrs['ingredients_in_recipe']:
+            if ingredient['amount'] < 1:
+                raise ValidationError('Нужно добавить кол-во ингредиента')
+            id_ingredients.append(ingredient['id'])
+        if len(id_ingredients) > len(set(id_ingredients)):
+            raise ValidationError('едиенты не могут повто')
+        return attrs
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')

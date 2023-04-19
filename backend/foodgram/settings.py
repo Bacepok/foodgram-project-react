@@ -7,7 +7,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-&wc4r82_8@!n(b4#&g2=_$5o8gdo6l2szlie4)$m#k-gow+#d+'
+SECRET_KEY = os.getenv('SECRET_KEY'),
 
 DEBUG = True
 
@@ -136,3 +136,5 @@ DJOSER = {
         'user_create': 'api.serializers.CustomUserCreateSerializer',
     },
 }
+
+AUTH_USER_MODEL = "users.User"

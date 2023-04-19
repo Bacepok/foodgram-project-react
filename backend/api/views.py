@@ -4,13 +4,15 @@ from django.shortcuts import get_list_or_404, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
-from rest_framework.permissions import AllowAny
 
-from api import serializers, utils
-from recipes.models import Tag, Ingredient, Recipe
-from users.models import Favorite, Follow, ShoppingCart, User
+from api import filters, serializers, utils
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from users.models import Follow, User
+
+from .permissions import IsAuthorOrAdminOrReadOnly
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -30,10 +32,10 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
-    permission_classes = (utils.FoodgramCurrentUserOrAdminOrReadOnly,)
+    permission_classes = [IsAuthorOrAdminOrReadOnly]
     pagination_class = utils.PageLimitPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = utils.RecipeFilter
+    filterset_class = filters.RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('create', 'update'):

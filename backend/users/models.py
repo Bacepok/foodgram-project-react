@@ -1,9 +1,44 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from recipes.models import Recipe
 
-User = get_user_model()
+class User(AbstractUser):
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+    USERS_ROLES = (
+        (USER, 'Пользователь'),
+        (MODERATOR, 'Модератор'),
+        (ADMIN, 'Администратор'),
+    )
+    email = models.EmailField(
+        'электронная почта',
+        max_length=250,
+        unique=True,
+    )
+    first_name = models.CharField(
+        'имя',
+        max_length=150,
+    )
+    last_name = models.CharField(
+        'фамилия',
+        max_length=150,
+    )
+    role = models.CharField(
+        'пользовательская роль',
+        max_length=max(len(role) for role, none_ in USERS_ROLES),
+        choices=USERS_ROLES,
+        default=USER,
+    )
+    is_admin = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'пользователи'
+        ordering = ('id',)
+        indexes = [
+            models.Index(fields=['role', ], name='role_idx'),
+        ]
 
 
 class Follow(models.Model):
@@ -27,45 +62,3 @@ class Follow(models.Model):
 
     def __str__(self) -> str:
         return f'Flw: {self.user.username}->{self.following.username}'[:30]
-
-
-class Favorite(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='favorite_list',
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='is_favorited',
-    )
-
-    class Meta:
-        ordering = ['id']
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'
-
-    def __str__(self) -> str:
-        return f'Fav: {self.user.username}->{self.recipe.name}'[:30]
-
-
-class ShoppingCart(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='is_in_shopping_cart',
-    )
-
-    class Meta:
-        ordering = ['id']
-        verbose_name = 'Покупки'
-        verbose_name_plural = 'Покупки'
-
-    def __str__(self) -> str:
-        return f'Shp: {self.user.username}->{self.recipe.name}'[:30]

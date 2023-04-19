@@ -1,8 +1,7 @@
-from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-User = get_user_model()
+from users.models import User
 
 
 class Tag(models.Model):
@@ -116,3 +115,45 @@ class TagsInRecipe(models.Model):
 
     def __str__(self) -> str:
         return f'TR: {self.tag.name}->{self.recipe.name}'[:30]
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorite_list',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='is_favorited',
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+
+    def __str__(self) -> str:
+        return f'Fav: {self.user.username}->{self.recipe.name}'[:30]
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='is_in_shopping_cart',
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Покупки'
+        verbose_name_plural = 'Покупки'
+
+    def __str__(self) -> str:
+        return f'Shp: {self.user.username}->{self.recipe.name}'[:30]
