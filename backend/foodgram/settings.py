@@ -1,17 +1,23 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+DEBUG = False
+
+RUN_LOCAL = False
+
+if RUN_LOCAL:
+    from dotenv import load_dotenv
+    load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY'),
 
-DEBUG = True
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS'),
 
-ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [f'http://{ALLOWED_HOSTS[0]}', f'https://{ALLOWED_HOSTS[0]}']
+
+USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
