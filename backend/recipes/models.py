@@ -1,6 +1,5 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
 from users.models import User
 
 
@@ -37,7 +36,7 @@ class Recipe(models.Model):
         upload_to='recipes/images/',
         null=True,
         blank=True
-        )
+    )
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
             MaxValueValidator(300),
