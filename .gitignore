@@ -131,12 +131,5 @@ dmypy.json
 # .idea
 .idea
 
-static/
 
 **.vscode
-**.frontend
-**frontend*
-**.frontend.public
-**frontend/public*
-backend/static/admin/
-backend/static/rest_framework/

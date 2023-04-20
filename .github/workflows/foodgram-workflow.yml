@@ -6,6 +6,7 @@ jobs:
 
   build_and_push:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
       - name: Вызов сборщика контейнеров docker
@@ -22,19 +23,17 @@ jobs:
           push: true
           tags: bacep/foodgram:latest
 
-   deploy:
+  deploy:
     runs-on: ubuntu-latest
-    needs: build_and_push_to_docker_hub
-    if: github.ref == 'refs/heads/master'
     steps:
-      - name: executing remote ssh commands to deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
-          script: |
+    - name: executing remote ssh commands to deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+        script: |
             sudo docker --version
             sudo docker-compose stop
             sudo docker-compose rm web
