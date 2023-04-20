@@ -1,8 +1,7 @@
+from api import views
 from django.urls import include, path, re_path
 from djoser.views import UserViewSet
 from rest_framework.routers import SimpleRouter
-
-from api import views
 
 api_router = SimpleRouter()
 api_router.register('tags', views.TagViewSet, basename='tag')
