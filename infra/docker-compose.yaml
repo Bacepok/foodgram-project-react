@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-    build: ./backend/
+    build: ../backend/
     restart: always
     volumes:
       - static_volume:/app/static/
@@ -20,7 +20,7 @@ services:
       - ./.env
 
   frontend:
-    build: ./frontend
+    build: ../frontend
     volumes:
       - ../frontend/:/app/result_build/
 
