@@ -39,8 +39,7 @@ jobs:
         script: |
             sudo docker --version
             sudo docker-compose stop
-            sudo docker-compose rm foodgram_backend
-            sudo docker-compose rm frontend_foodgram
+            sudo docker-compose rm
             sudo rm .env
             touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
@@ -70,4 +69,4 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: ${{ github.workflow }} - deployed to VM!
+        message: ${{ github.workflow }} - deployed to VM
