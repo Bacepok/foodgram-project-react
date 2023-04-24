@@ -20,7 +20,7 @@ services:
       - ./.env
 
   frontend:
-    image: pavebaceplprist/frontend_foodgram:latest
+    image: bacep/frontend_foodgram:latest
     restart: always
     volumes:
       - ../frontend/:/app/result_build/
