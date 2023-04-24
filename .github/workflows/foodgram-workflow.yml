@@ -47,7 +47,8 @@ jobs:
           echo DB_PORT=${{ secrets.DB_PORT }} >> .env
           sudo docker compose stop
           sudo docker compose rm web
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/frontend_foodgram:latest
           sudo docker compose up -d --build
           sudo docker system prune -f
           sudo docker compose exec backend python manage.py migrate
