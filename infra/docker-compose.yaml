@@ -23,7 +23,7 @@ services:
     env_file:
       - ./.env
   frontend:
-    image: bacep/foodgram_frontend:latest
+    image: bacep/frontend_foodgram:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
