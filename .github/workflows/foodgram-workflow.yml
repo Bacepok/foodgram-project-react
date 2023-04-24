@@ -32,7 +32,7 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
-        key: ${{ secrets.PASSPHRASE }}
+        key: ${{ secrets.SSH_KEY }}
         script: |
             cd foodgram-project-react/
             git pull
@@ -51,6 +51,8 @@ jobs:
             docker image prune -f
             docker compose exec backend python manage.py migrate
             docker compose exec backend python manage.py collectstatic --no-input
+
+
 
   send_message_push:
     runs-on: ubuntu-latest
