@@ -16,8 +16,8 @@ services:
     image: bacep/foodgram_backend:latest
     restart: always
     volumes:
-      - static_value:/code/static_backend/
-      - media_value:/code/media/
+      - static_value:/app/static_backend/
+      - media_value:/app/media/
     depends_on:
       - db
     env_file:
@@ -25,7 +25,7 @@ services:
   frontend:
     image: bacep/frontend_foodgram:latest
     volumes:
-      - ../frontend/:/app/result_build/
+      - ../frontend/:/app/frontend/
     depends_on:
       - backend
   nginx:
