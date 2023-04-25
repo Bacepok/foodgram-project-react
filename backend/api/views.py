@@ -3,7 +3,7 @@ from io import StringIO
 from api import filters, pagination, serializers, utils
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.permissions import AllowAny
@@ -95,7 +95,6 @@ class SubscriptionCreateDestroyViewSet(viewsets.ModelViewSet):
 class FavoriteViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.RecipeMinifiedSerializer
     http_method_names = ['post', 'delete']
-    model = Favorite
 
     def get_queryset(self):
         return get_object_or_404(Recipe, id=self.kwargs.get('recipe_id'))
