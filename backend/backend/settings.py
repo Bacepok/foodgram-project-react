@@ -11,9 +11,9 @@ if RUN_LOCAL:
     from dotenv import load_dotenv
     load_dotenv()
 
-SECRET_KEY = 'p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs'
+SECRET_KEY = os.getenv('SECRET_KEY'),
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS'),
 
 CSRF_TRUSTED_ORIGINS = [f'http://{ALLOWED_HOSTS[0]}', f'https://{ALLOWED_HOSTS[0]}']
 
