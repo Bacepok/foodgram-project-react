@@ -169,7 +169,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
                 raise ValidationError('Нужно добавить кол-во ингредиента')
             id_ingredients.append(ingredient['id'])
         if len(id_ingredients) > len(set(id_ingredients)):
-            raise ValidationError('едиенты не могут повто')
+            raise ValidationError('Ингредиенты не могут повторяться')
         return attrs
 
     def create(self, validated_data):
