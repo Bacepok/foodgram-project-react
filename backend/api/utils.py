@@ -1,13 +1,7 @@
 from django_filters.rest_framework import (AllValuesMultipleFilter, FilterSet,
                                            NumberFilter)
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.renderers import BaseRenderer
-
 from recipes.models import Recipe
-
-
-class PageLimitPagination(PageNumberPagination):
-    page_size_query_param = 'limit'
+from rest_framework.renderers import BaseRenderer
 
 
 class RecipeFilter(FilterSet):

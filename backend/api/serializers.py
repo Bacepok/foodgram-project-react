@@ -1,12 +1,11 @@
 from django.core.validators import MinValueValidator
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
+from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from rest_framework.validators import UniqueValidator
-
-from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
-                            ShoppingCart, Tag)
 from users.models import Follow, User
 
 
@@ -169,7 +168,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
                 raise ValidationError('Нужно добавить кол-во ингредиента')
             id_ingredients.append(ingredient['id'])
         if len(id_ingredients) > len(set(id_ingredients)):
-            raise ValidationError('Ингредиенты не могут повторяться.')
+            raise ValidationError('Ингредиенты не могут повторяться')
         return attrs
 
     def create(self, validated_data):
