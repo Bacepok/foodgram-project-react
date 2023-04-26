@@ -13,7 +13,7 @@ if RUN_LOCAL:
 
 SECRET_KEY = 'p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS'),
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [f'http://{ALLOWED_HOSTS[0]}', f'https://{ALLOWED_HOSTS[0]}']
 
