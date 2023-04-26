@@ -1,4 +1,5 @@
 from django.core.validators import MinValueValidator
+from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
@@ -186,12 +187,33 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients_obj = validated_data.pop('ingredients')
-        instance = super().update(instance, validated_data)
-        instance.ingredients.clear()
-        instance.tags.set(validated_data['tags'])
-        self.create_link_ingredients_recipe(ingredients_obj, instance)
-        return instance
+        tags = validated_data.pop('tags', None)
+        if tags is not None:
+            instance.tags.set(tags)
+
+        ingredients = validated_data.pop('ingredients_in_recipe', None)
+        if ingredients is not None:
+            instance.ingredients.clear()
+
+            for ingredient in ingredients:
+                amount = ingredient['amount']
+                ingredient = get_object_or_404(Ingredient, pk=ingredient['id'])
+
+                IngredientsInRecipe.objects.update_or_create(
+                    recipe=instance,
+                    ingredient=ingredient,
+                    defaults={'amount': amount}
+                )
+
+        return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        serializer = RecipeRetrieveSerializer(
+            instance,
+            context={'request': self.context.get('request')}
+        )
+
+        return serializer.data
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
