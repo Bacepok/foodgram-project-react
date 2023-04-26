@@ -1,5 +1,4 @@
 from django.core.validators import MinValueValidator
-from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
@@ -187,23 +186,17 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        if 'tags' in self.validated_data:
-            tags_data = validated_data.pop('tags')
-            instance.tags.set(tags_data)
-        if 'ingredients' in self.validated_data:
-            ingredient = validated_data.pop('ingredients_in_recipe')
-            with transaction.atomic():
-                amount_set = IngredientsInRecipe.objects.filter(
-                    recipe__id=instance.id)
-                amount_set.delete()
-                bulk_create_data = (
-                    IngredientsInRecipe(
-                        recipe=instance,
-                        ingredient=ingredient['ingredient'],
-                        amount=ingredient['amount'])
-                    for ingredient in ingredient
-                )
-                IngredientsInRecipe.objects.bulk_create(bulk_create_data)
+        ingredients = validated_data.pop('ingredients_in_recipe')
+        instance = super().update(instance, validated_data)
+        instance.ingredients.clear()
+        instance.tags.set(validated_data['tags'])
+        IngredientsInRecipe.objects.bulk_create(
+            IngredientsInRecipe(
+                amount=ingredient['amount'],
+                ingredient=ingredient['id'],
+                instance=instance,
+            ) for ingredient in ingredients
+        )
         return super().update(instance, validated_data)
 
 
