@@ -1,13 +1,9 @@
-from collections import OrderedDict
-
-from django.db import transaction
 from django.core.validators import MinValueValidator
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
                             ShoppingCart, Tag)
-from rest_framework import exceptions, serializers
+from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from rest_framework.validators import UniqueValidator
 from users.models import Follow, User
@@ -122,101 +118,72 @@ class IngredientsListingSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    """Serializer for displaying recipes."""
-
-    tags = TagSerializer(many=True)
-    author = CustomUserSerializer(read_only=True)
+class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(
+        max_length=100,
+        validators=[UniqueValidator(
+            queryset=Recipe.objects.all(),
+            message='Рецепт с таким именем уже существует')],
+    )
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all()
+    )
     ingredients = IngredientsListingSerializer(
-        many=True, source='ingredients_in_recipe')
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+        many=True,
+        source='ingredients_in_recipe'
+    )
     image = Base64ImageField()
+    cooking_time = serializers.IntegerField(
+        validators=(
+            MinValueValidator(
+                1,
+                message='Время приготовления должно быть 1 или более.'
+            ),
+        )
+    )
 
     class Meta:
         model = Recipe
         fields = (
-            'id', 'tags', 'author', 'ingredients', 'is_favorited',
-            'is_in_shopping_cart', 'name', 'image', 'text', 'cooking_time',
+            'id',
+            'ingredients',
+            'tags',
+            'image',
+            'name',
+            'text',
+            'cooking_time'
         )
 
-    def get_is_favorited(self, obj):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        return obj.is_favorited(request.user)
-
-    def get_is_in_shopping_cart(self, obj):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        return obj.is_in_shopping_cart(request.user)
-
-
-class RecipeCreateUpdateSerializer(RecipeSerializer):
-    """Serializer for creating and updating recipes."""
-
-    tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all())
-    ingredients = IngredientsListingSerializer(
-        source='ingredients_in_recipe', many=True)
-
     def validate(self, attrs):
+        if len(attrs['tags']) == 0:
+            raise ValidationError('Рецепт не может быть без тегов!')
         if len(attrs['tags']) > len(set(attrs['tags'])):
-            raise serializers.ValidationError(
-                'Unable to add the same tag multiple times.'
-            )
-
-        ingredients = [
-            item['ingredient'] for item in attrs['ingredients_in_recipe']]
-        if len(ingredients) > len(set(ingredients)):
-            raise serializers.ValidationError(
-                'Unable to add the same ingredient multiple times.'
-            )
-
+            raise ValidationError('Теги не могут повторяться!')
+        if len(attrs['ingredients_in_recipe']) == 0:
+            raise ValidationError('Нужно добавить ингредиенты')
+        id_ingredients = []
+        for ingredient in attrs['ingredients_in_recipe']:
+            if ingredient['amount'] < 1:
+                raise ValidationError('Нужно добавить кол-во ингредиента')
+            id_ingredients.append(ingredient['id'])
+        if len(id_ingredients) > len(set(id_ingredients)):
+            raise ValidationError('Ингредиенты не могут повторяться')
         return attrs
 
-    @transaction.atomic
-    def set_recipe_ingredients(self, recipe, ingredients):
-        recipe_ingredients = [
-            IngredientsInRecipe(
-                recipe=recipe,
-                ingredient=current_ingredient['ingredient'],
-                amount=current_ingredient['amount'],
-            )
-            for current_ingredient in ingredients
-        ]
-        IngredientsInRecipe.objects.bulk_create(recipe_ingredients)
-
-    @transaction.atomic
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients_in_recipe')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        self.set_recipe_ingredients(recipe, ingredients)
+        IngredientsInRecipe.objects.bulk_create(
+            IngredientsInRecipe(
+                amount=ingredient['amount'],
+                ingredient=ingredient['id'],
+                recipe=recipe,
+            ) for ingredient in ingredients
+        )
         return recipe
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients_in_recipe')
-        instance.ingredients.clear()
-        instance.tags.clear()
-        super().update(instance, validated_data)
-        instance.tags.set(tags)
-        self.set_recipe_ingredients(instance, ingredients)
-        return instance
-
-    def to_representation(self, instance):
-        repr = super().to_representation(instance)
-        tag_id_list, tag_list = repr['tags'], []
-        for tag_id in tag_id_list:
-            tag = get_object_or_404(Tag, id=tag_id)
-            serialized_tag = OrderedDict(TagSerializer(tag).data)
-            tag_list.append(serialized_tag)
-        repr['tags'] = tag_list
-        return repr
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
