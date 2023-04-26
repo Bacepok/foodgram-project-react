@@ -68,7 +68,7 @@ class IngredientsInRecipe(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='ingredients',
+        related_name='ingredients_in_recipe',
     )
     amount = models.PositiveSmallIntegerField(
         validators=[
@@ -79,7 +79,7 @@ class IngredientsInRecipe(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='ingredients',
+        related_name='ingredients_in_recipe',
     )
 
     class Meta:
