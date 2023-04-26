@@ -191,7 +191,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             tags_data = validated_data.pop('tags')
             instance.tags.set(tags_data)
         if 'ingredients' in self.validated_data:
-            ingredients_data = validated_data.pop('ingredients_in_recipe')
+            ingredient = validated_data.pop('ingredients_in_recipe')
             with transaction.atomic():
                 amount_set = IngredientsInRecipe.objects.filter(
                     recipe__id=instance.id)
@@ -199,9 +199,9 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
                 bulk_create_data = (
                     IngredientsInRecipe(
                         recipe=instance,
-                        ingredient=ingredient_data['ingredient'],
-                        amount=ingredient_data['amount'])
-                    for ingredient_data in ingredients_data
+                        ingredient=ingredient['ingredient'],
+                        amount=ingredient['amount'])
+                    for ingredient in ingredient
                 )
                 IngredientsInRecipe.objects.bulk_create(bulk_create_data)
         return super().update(instance, validated_data)
