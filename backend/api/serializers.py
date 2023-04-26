@@ -128,7 +128,10 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
-    ingredients = IngredientsListingSerializer(many=True)
+    ingredients = IngredientsListingSerializer(
+        many=True,
+        source='ingredients_in_recipe'
+    )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
         validators=(
