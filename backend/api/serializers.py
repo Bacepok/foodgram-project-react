@@ -184,6 +184,20 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             ) for ingredient in ingredients
         )
         return recipe
+    
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags')
+        instance.tags.set(tags)
+        ingredients = validated_data.pop('ingredients_in_recipe')
+
+        recipe_update = [IngredientsInRecipe(
+            recipe=instance,
+            amount=ingredient['amount'],
+            ingredient=ingredient['ingredient']
+        ) for ingredient in ingredients]
+        IngredientsInRecipe.objects.bulk_create(recipe_update)
+
+        return instance
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
