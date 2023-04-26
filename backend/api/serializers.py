@@ -155,22 +155,6 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def validate(self, attrs):
-        if len(attrs['tags']) == 0:
-            raise ValidationError('Рецепт не может быть без тегов!')
-        if len(attrs['tags']) > len(set(attrs['tags'])):
-            raise ValidationError('Теги не могут повторяться!')
-        if len(attrs['ingredients_in_recipe']) == 0:
-            raise ValidationError('Нужно добавить ингредиенты')
-        id_ingredients = []
-        for ingredient in attrs['ingredients_in_recipe']:
-            if ingredient['amount'] < 1:
-                raise ValidationError('Нужно добавить кол-во ингредиента')
-            id_ingredients.append(ingredient['id'])
-        if len(id_ingredients) > len(set(id_ingredients)):
-            raise ValidationError('Ингредиенты не могут повторяться...')
-        return attrs
-
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients_in_recipe')
