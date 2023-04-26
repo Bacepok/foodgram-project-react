@@ -132,7 +132,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     )
     ingredients = IngredientsListingSerializer(
         many=True,
-        source='ingredients'
+        source='ingredients_in_recipe'
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
@@ -157,7 +157,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
+        ingredients = self.initial_data.get('ingredients_in_recipe')
         ingredients_list = [ingredient['id'] for ingredient in ingredients]
         if len(ingredients_list) != len(set(ingredients_list)):
             raise serializers.ValidationError(
@@ -178,7 +178,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         return representation
 
     def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
+        ingredients_data = validated_data.pop('ingredients_in_recipe')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
@@ -198,7 +198,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             tags_data = validated_data.pop('tags')
             instance.tags.set(tags_data)
         if 'ingredients' in self.validated_data:
-            ingredients_data = validated_data.pop('ingredients')
+            ingredients_data = validated_data.pop('ingredients_in_recipe')
             with transaction.atomic():
                 amount_set = IngredientsInRecipe.objects.filter(
                     recipe__id=instance.id)
