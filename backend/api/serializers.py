@@ -170,7 +170,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
+        ingredients = validated_data.pop('ingredients_in_recipe')
 
         recipe = Recipe.objects.create(author=author, **validated_data)
         recipe.tags.set(tags)
@@ -192,7 +192,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         if tags is not None:
             instance.tags.set(tags)
 
-        ingredients = validated_data.pop('ingredients', None)
+        ingredients = validated_data.pop('ingredients_in_recipe', None)
         if ingredients is not None:
             instance.ingredients.clear()
 
