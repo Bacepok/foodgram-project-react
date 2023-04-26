@@ -132,7 +132,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     )
     ingredients = IngredientsListingSerializer(
         many=True,
-        source='ingredients_in_recipe'
+        source='ingredients'
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
