@@ -185,6 +185,14 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         )
         return recipe
 
+    def update(self, instance, validated_data):
+        ingredients_obj = validated_data.pop('ingredients_in_recipe')
+        instance = super().update(instance, validated_data)
+        instance.ingredients.clear()
+        instance.tags.set(validated_data['tags'])
+        self.create_link_ingredients_recipe(ingredients_obj, instance)
+        return instance
+
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     email = serializers.CharField(
