@@ -171,6 +171,11 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             raise ValidationError('Ингредиенты не могут повторяться')
         return attrs
 
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeRetrieveSerializer(instance, context=context).data
+
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients_in_recipe')
@@ -184,7 +189,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             ) for ingredient in ingredients
         )
         return recipe
-    
+
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         instance.tags.set(tags)
