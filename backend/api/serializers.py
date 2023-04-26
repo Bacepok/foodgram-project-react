@@ -1,11 +1,9 @@
 from django.core.validators import MinValueValidator
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
                             ShoppingCart, Tag)
 from rest_framework import serializers
-from rest_framework.serializers import ValidationError
 from rest_framework.validators import UniqueValidator
 from users.models import Follow, User
 
@@ -77,29 +75,25 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     tags = TagSerializer(many=True)
-    ingredients = IngredientInRecipeSerializer(
-        source='ingredients_in_recipe',
-        many=True
-    )
+    ingredients = serializers.SerializerMethodField(read_only=True)
     author = CustomUserSerializer()
 
     class Meta:
         model = Recipe
         fields = '__all__'
 
-    def validator(self, obj, model):
-        result = False
-        user = self.context['request'].user
-        if user.is_authenticated:
-            result = model.objects.filter(user=user, recipe=obj).exists()
-        return result
+    def check_anonymous_help_func(self, obj, model):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        return model.objects.filter(user=request.user, recipe=obj).exists()
 
     def get_is_favorited(self, obj):
         return self.validator(obj, Favorite)
 
     def get_is_in_shopping_cart(self, obj):
         return self.validator(obj, ShoppingCart)
-    
+
     def get_ingredients(self, obj):
         queryset = IngredientsInRecipe.objects.filter(recipe=obj)
         return IngredientInRecipeSerializer(queryset, many=True).data
@@ -134,10 +128,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
-    ingredients = IngredientsListingSerializer(
-        many=True,
-        source='ingredients_in_recipe'
-    )
+    ingredients = IngredientsListingSerializer(many=True)
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
         validators=(
@@ -230,7 +221,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         context = {'request': request}
         return RecipeRetrieveSerializer(instance, context=context).data
- 
+
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     email = serializers.CharField(
