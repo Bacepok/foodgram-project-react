@@ -129,10 +129,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
-    ingredients = IngredientsListingSerializer(
-        many=True,
-        source='ingredients_in_recipe'
-    )
+    ingredients = IngredientsListingSerializer(many=True)
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
         validators=(
@@ -155,22 +152,46 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def validate(self, attrs):
-        if len(attrs['tags']) == 0:
-            raise ValidationError('Рецепт не может быть без тегов!')
-        if len(attrs['tags']) > len(set(attrs['tags'])):
-            raise ValidationError('Теги не могут повторяться!')
-        if len(attrs['ingredients_in_recipe']) == 0:
-            raise ValidationError('Нужно добавить ингредиенты')
-        id_ingredients = []
-        for ingredient in attrs['ingredients_in_recipe']:
-            if ingredient['amount'] < 1:
-                raise ValidationError('Нужно добавить кол-во ингредиента')
-            id_ingredients.append(ingredient['id'])
-        if len(id_ingredients) > len(set(id_ingredients)):
-            raise ValidationError('Ингредиенты не могут повторяться...')
-        return attrs
-    
+    def validate(self, data):
+        ingredients = data['ingredients']
+        if not ingredients:
+            raise serializers.ValidationError({
+                'ingredients': 'Добавьте хотя бы один ингредиент'
+            })
+        ingredients_list = []
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id in ingredients_list:
+                raise serializers.ValidationError({
+                    'ingredients': 'Ингредиенты должны быть разными'
+                })
+            ingredients_list.append(ingredient_id)
+            amount = ingredient['amount']
+            if int(amount) <= 0:
+                raise serializers.ValidationError({
+                    'amount': 'Количество ингредиента должно быть больше нуля'
+                })
+
+        tags = data['tags']
+        if not tags:
+            raise serializers.ValidationError({
+                'tags': 'Нужно выбрать хотя бы один тэг'
+            })
+        tags_list = []
+        for tag in tags:
+            if tag in tags_list:
+                raise serializers.ValidationError({
+                    'tags': 'Тэги не должны повторяться'
+                })
+            tags_list.append(tag)
+
+        cooking_time = data['cooking_time']
+        if int(cooking_time) <= 0:
+            raise serializers.ValidationError({
+                'cooking_time': 'Время приготовления должно быть больше нуля'
+            })
+        return data
+
     @staticmethod
     def create_link_ingredients_recipe(ingredients_obj, recipe):
         for obj in ingredients_obj:
