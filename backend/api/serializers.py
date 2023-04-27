@@ -36,7 +36,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientsInRecipe
-        fields = ('id', 'name', 'measurement_unit', 'amount')
+        fields = ('id', 'name', 'measurement_unit', 'amount',)
 
 
 class CustomUserSerializer(UserSerializer):
@@ -88,7 +88,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
                   'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image',
-                  'text', 'cooking_time')
+                  'text', 'cooking_time',)
 
     def validator(self, obj, model):
         result = False
@@ -108,7 +108,7 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
+        fields = ('id', 'name', 'image', 'cooking_time',)
 
 
 class IngredientsListingSerializer(serializers.ModelSerializer):
@@ -119,7 +119,7 @@ class IngredientsListingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientsInRecipe
-        fields = ('id', 'amount')
+        fields = ('id', 'amount',)
 
 
 class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
@@ -157,7 +157,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'name',
             'text',
             'cooking_time',
-            'author'
+            'author',
         )
         extra_kwargs = {
             'ingredients': {'required': True, 'allow_blank': False},

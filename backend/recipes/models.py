@@ -53,6 +53,12 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes'
     )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientsInRecipe',
+        related_name='recipes',
+        verbose_name='Ингредиенты'
+    )
     tags = models.ManyToManyField(
         Tag,
         verbose_name='Теги'
@@ -62,6 +68,11 @@ class Recipe(models.Model):
         ordering = ['-id']
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('name', 'author'),
+                name='recipe_name_unique')
+        ]
 
     def __str__(self):
         return self.name
