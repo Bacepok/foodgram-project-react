@@ -1,4 +1,5 @@
 from django.core.validators import MinValueValidator
+from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, IngredientsInRecipe, Recipe,
@@ -171,9 +172,10 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             raise ValidationError('Ингредиенты не могут повторяться')
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
         tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients_in_recipe')
+        ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         IngredientsInRecipe.objects.bulk_create(
@@ -185,11 +187,11 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         )
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients_in_recipe')
+        ingredients = validated_data.pop('ingredients')
         instance.ingredients.clear()
-        instance.tags.clear()
         instance.tags.set(tags)
         recipe_update = [IngredientsInRecipe(
             recipe=instance,
@@ -197,7 +199,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             ingredient=ingredient['ingredient']
         ) for ingredient in ingredients]
         IngredientsInRecipe.objects.bulk_create(recipe_update)
-        return instance
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         request = self.context.get('request')
