@@ -78,7 +78,7 @@ class RecipeRetrieveSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
     tags = TagSerializer(many=True)
     ingredients = IngredientInRecipeSerializer(
-        source='ingredients_in_recipe',
+        source='ingredients',
         many=True
     )
     author = CustomUserSerializer()
@@ -132,7 +132,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
     )
     ingredients = IngredientsListingSerializer(
         many=True,
-        source='ingredients_in_recipe'
+        source='ingredients'
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
@@ -161,7 +161,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             raise ValidationError('Рецепт не может быть без тегов!')
         if len(attrs['tags']) > len(set(attrs['tags'])):
             raise ValidationError('Теги не могут повторяться!')
-        if len(attrs['ingredients_in_recipe']) == 0:
+        if len(attrs['ingredients']) == 0:
             raise ValidationError('Нужно добавить ингредиенты')
         id_ingredients = []
         for ingredient in attrs['ingredients_in_recipe']:

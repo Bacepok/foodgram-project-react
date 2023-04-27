@@ -126,14 +126,14 @@ def download_shopping_cart(request):
     user = request.user
     cart = get_list_or_404(
         ShoppingCart.objects.select_related('recipe').prefetch_related(
-            'recipe__ingredients_in_recipe'
+            'recipe__ingredients'
         ),
         user=user
     )
     ingredients = []
     for i in cart:
         ingredients.extend(
-            i.recipe.ingredients_in_recipe.all()
+            i.recipe.ingredients.all()
         )
     ingredients_dict = {}
     for i in ingredients:
