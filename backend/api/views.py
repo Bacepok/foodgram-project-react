@@ -37,18 +37,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = filters.RecipeFilter
 
     def get_serializer_class(self):
-        if self.action in ('create', 'update'):
-            return serializers.RecipeCreateUpdateSerializer
-        return serializers.RecipeRetrieveSerializer
+        if self.action in ('list', 'retrieve'):
+            return serializers.RecipeRetrieveSerializer
+        return serializers.RecipeCreateUpdateSerializer
 
-    def perform_create(self, serializer):
-        author = self.request.user
-        serializer.save(author=author)
+    @staticmethod
+    def post_actions(request, pk, serializers):
+        data = {'user': request.user.id, 'recipe': pk}
+        serializer = serializers(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def perform_update(self, serializer):
-        author = self.request.user
-        id = self.kwargs.get('pk')
-        serializer.save(author=author, id=id)
+    @staticmethod
+    def delete_actions(request, pk, model):
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
+        object_ = model.objects.filter(user=user, recipe=recipe)
+        if not object_.exists():
+            return Response(
+                "Объекта не существует",
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        object_.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscriptionListViewSet(viewsets.ReadOnlyModelViewSet):
