@@ -44,6 +44,12 @@ class Recipe(models.Model):
         ]
     )
     text = models.TextField()
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='Recipe_ingredient',
+        through_fields=('recipe', 'ingredient'),
+        verbose_name='Ингредиенты'
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -68,7 +74,7 @@ class IngredientsInRecipe(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='ingredients_in_recipe',
+        related_name='ingredients',
     )
     amount = models.PositiveSmallIntegerField(
         validators=[
@@ -79,7 +85,7 @@ class IngredientsInRecipe(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='ingredients_in_recipe',
+        related_name='recipes',
     )
 
     class Meta:
