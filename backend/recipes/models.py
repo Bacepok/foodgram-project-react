@@ -32,28 +32,32 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     name = models.CharField(max_length=200)
-    image = models.ImageField(
-        upload_to='recipes/images/',
-        null=True,
-        blank=True
-    )
+    text = models.TextField()
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
             MaxValueValidator(300),
             MinValueValidator(1)
         ]
     )
-    text = models.TextField()
+    image = models.ImageField(
+        upload_to='recipes/images/',
+        null=True,
+        blank=True
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='recipes'
+    )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='Recipe_ingredient',
         through_fields=('recipe', 'ingredient'),
         verbose_name='Ингредиенты'
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='recipes',
     )
     tags = models.ManyToManyField(
         Tag,
@@ -70,27 +74,34 @@ class Recipe(models.Model):
 
 
 class IngredientsInRecipe(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipes',
+    )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         related_name='ingredients',
     )
+
     amount = models.PositiveSmallIntegerField(
         validators=[
             MaxValueValidator(1000),
             MinValueValidator(1)
         ]
     )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='recipes',
-    )
 
     class Meta:
         ordering = ['id']
         verbose_name = 'Игнр. в рецептах'
         verbose_name_plural = 'Игнр. в рецептах'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_combination'
+            )
+        ]
 
     def __str__(self) -> str:
         text = (
