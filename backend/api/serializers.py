@@ -181,34 +181,31 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             raise ValidationError('Ингредиенты не могут повторяться')
         return attrs
 
-    @transaction.atomic
-    def create(self, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags)
-        IngredientsInRecipe.objects.bulk_create(
-            IngredientsInRecipe(
-                amount=ingredient['amount'],
-                ingredient=ingredient['id'],
+    @staticmethod
+    def create_link_ingredients_recipe(ingredients_obj, recipe):
+        for obj in ingredients_obj:
+            IngredientsInRecipe.objects.create(
                 recipe=recipe,
-            ) for ingredient in ingredients
-        )
+                ingredient=obj['id'],
+                amount=obj['amount']
+            )
+
+    def create(self, validated_data):
+        author = self.context.get('request').user
+        ingredients_obj = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(author=author, **validated_data)
+        self.create_link_ingredients_recipe(ingredients_obj, recipe)
+        recipe.tags.set(tags)
         return recipe
 
-    @transaction.atomic
     def update(self, instance, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
+        ingredients_obj = validated_data.pop('ingredients')
+        instance = super().update(instance, validated_data)
         instance.ingredients.clear()
-        instance.tags.set(tags)
-        recipe_update = [IngredientsInRecipe(
-            recipe=instance,
-            amount=ingredient['amount'],
-            ingredient=ingredient['ingredient']
-        ) for ingredient in ingredients]
-        IngredientsInRecipe.objects.bulk_create(recipe_update)
-        return super().update(instance, validated_data)
+        instance.tags.set(validated_data['tags'])
+        self.create_link_ingredients_recipe(ingredients_obj, instance)
+        return instance
 
     def to_representation(self, instance):
         request = self.context.get('request')
