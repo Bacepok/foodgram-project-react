@@ -131,8 +131,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all()
     )
     ingredients = IngredientsListingSerializer(
-        many=True,
-        source='ingredients'
+        many=True
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
@@ -164,7 +163,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         if len(attrs['ingredients']) == 0:
             raise ValidationError('Нужно добавить ингредиенты')
         id_ingredients = []
-        for ingredient in attrs['ingredients_in_recipe']:
+        for ingredient in attrs['ingredients']:
             if ingredient['amount'] < 1:
                 raise ValidationError('Нужно добавить кол-во ингредиента')
             id_ingredients.append(ingredient['id'])
