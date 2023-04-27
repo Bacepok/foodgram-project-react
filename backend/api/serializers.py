@@ -130,6 +130,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
+    author = CustomUserSerializer(read_only=True)
     ingredients = IngredientsListingSerializer(
         many=True
     )
@@ -152,8 +153,17 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'image',
             'name',
             'text',
-            'cooking_time'
+            'cooking_time',
+            'author'
         )
+        extra_kwargs = {
+            'ingredients': {'required': True, 'allow_blank': False},
+            'tags': {'required': True, 'allow_blank': False},
+            'name': {'required': True, 'allow_blank': False},
+            'text': {'required': True, 'allow_blank': False},
+            'image': {'required': True, 'allow_blank': False},
+            'cooking_time': {'required': True},
+        }
 
     def validate(self, attrs):
         if len(attrs['tags']) == 0:
