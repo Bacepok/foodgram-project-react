@@ -124,7 +124,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         max_length=100,
         validators=[UniqueValidator(
             queryset=Recipe.objects.all(),
-            message='Рецепт с таким именем уже существует')],
+            message='Рецепт с таким именем уже существует.')],
     )
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
