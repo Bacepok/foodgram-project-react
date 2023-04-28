@@ -168,67 +168,55 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             'cooking_time': {'required': True},
         }
 
-    def validate(self, obj):
-        for field in ['name', 'text', 'cooking_time']:
-            if not obj.get(field):
-                raise serializers.ValidationError(
-                    f'{field} - Обязательное поле.'
-                )
-        if not obj.get('tags'):
-            raise serializers.ValidationError(
-                'Нужно указать минимум 1 тег.'
-            )
-        if not obj.get('ingredients'):
-            raise serializers.ValidationError(
-                'Нужно указать минимум 1 ингредиент.'
-            )
-        inrgedient_id_list = [item['id'] for item in obj.get('ingredients')]
-        unique_ingredient_id_list = set(inrgedient_id_list)
-        if len(inrgedient_id_list) != len(unique_ingredient_id_list):
-            raise serializers.ValidationError(
-                'Ингредиенты должны быть уникальны.'
-            )
-        return obj
-
-    @transaction.atomic
-    def tags_and_ingredients_set(self, recipe, tags, ingredients):
-        recipe.tags.set(tags)
-        IngredientsInRecipe.objects.bulk_create(
-            [IngredientsInRecipe(
-                recipe=recipe,
-                ingredient=Ingredient.objects.get(pk=ingredient['id']),
-                amount=ingredient['amount']
-            ) for ingredient in ingredients]
-        )
+    def validate(self, attrs):
+        if len(attrs['tags']) == 0:
+            raise ValidationError('Рецепт не может быть без тегов!')
+        if len(attrs['tags']) > len(set(attrs['tags'])):
+            raise ValidationError('Теги не могут повторяться!')
+        if len(attrs['ingredients']) == 0:
+            raise ValidationError('Нужно добавить ингредиенты')
+        id_ingredients = []
+        for ingredient in attrs['ingredients']:
+            if ingredient['amount'] < 1:
+                raise ValidationError('Нужно добавить кол-во ингредиента')
+            id_ingredients.append(ingredient['id'])
+        if len(id_ingredients) > len(set(id_ingredients)):
+            raise ValidationError('Ингредиенты не могут повторяться')
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(author=self.context['request'].user,
-                                       **validated_data)
-        self.tags_and_ingredients_set(recipe, tags, ingredients)
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags)
+        IngredientsInRecipe.objects.bulk_create(
+            IngredientsInRecipe(
+                amount=ingredient['amount'],
+                ingredient=ingredient['id'],
+                recipe=recipe,
+            ) for ingredient in ingredients
+        )
         return recipe
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time)
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        IngredientsInRecipe.objects.filter(
+        instance.ingredients.clear()
+        instance.tags.set(tags)
+        recipe_update = [IngredientsInRecipe(
             recipe=instance,
-            ingredient__in=instance.ingredients.all()).delete()
-        self.tags_and_ingredients_set(instance, tags, ingredients)
-        instance.save()
-        return instance
+            amount=ingredient['amount'],
+            ingredient=ingredient['ingredient']
+        ) for ingredient in ingredients]
+        IngredientsInRecipe.objects.bulk_create(recipe_update)
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        return RecipeRetrieveSerializer(instance,
-                                        context=self.context).data
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeRetrieveSerializer(instance, context=context).data
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
