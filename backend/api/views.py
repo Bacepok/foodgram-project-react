@@ -1,39 +1,44 @@
 from io import StringIO
 
-from api import filters, pagination, serializers, utils
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, renderer_classes
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
-from users.models import Follow, User
 
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from .filters import RecipeFilter
+from .pagination import PageLimitPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
+from .serializers import TagSerializer, IngredientSerializer, RecipeRetrieveSerializer, RecipeCreateUpdateSerializer, \
+    RecipeMinifiedSerializer
+from .utils import PlainTextRenderer
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
-    serializer_class = serializers.TagSerializer
+    serializer_class = TagSerializer
     pagination_class = None
     permission_classes = (AllowAny,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
-    serializer_class = serializers.IngredientSerializer
+    serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (AllowAny,)
+    filter_backends = [SearchFilter]
+    search_fields = ['^name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthorOrAdminOrReadOnly]
-    pagination_class = pagination.PageLimitPagination
+    pagination_class = PageLimitPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = filters.RecipeFilter
+    filterset_class = RecipeFilter
     http_method_names = ['get', 'post', 'patch', 'create', 'delete']
 
     def perform_create(self, serializer):
@@ -41,8 +46,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
-            return serializers.RecipeRetrieveSerializer
-        return serializers.RecipeCreateUpdateSerializer
+            return RecipeRetrieveSerializer
+        return RecipeCreateUpdateSerializer
 
     @action(
         detail=True,
@@ -55,7 +60,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         recipe = get_object_or_404(Recipe, id=pk)
         model.objects.create(user=user, recipe=recipe)
-        serializer = serializers.RecipeMinifiedSerializer(recipe)
+        serializer = RecipeMinifiedSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete_from(self, model, user, pk):
@@ -67,49 +72,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
-class SubscriptionListViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = serializers.SubscriptionSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        return user.is_subscribed.all().select_related('following')
-
-
-class SubscriptionCreateDestroyViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.SubscriptionSerializer
-    http_method_names = ['post', 'delete']
-
-    def get_user(self):
-        return get_object_or_404(User, pk=self.kwargs.get('user_id'))
-
-    def get_queryset(self):
-        return self.get_user().is_followed.all()
-
-    def perform_create(self, serializer):
-        user = self.request.user
-        following = self.get_user()
-        if (
-            following == user
-            or Follow.objects.filter(
-                user=user, following=following
-            ).exists()
-        ):
-            raise ValidationError(
-                'Ошибка: подписка уже создана '
-                + 'или вы пытаетесь подписаться на себя'
-            )
-        serializer.save(following=following, user=user)
-
-    def delete(self, request, *args, **kwargs):
-        user = self.request.user
-        following = self.get_user()
-        instance = get_object_or_404(Follow, user=user, following=following)
-        instance.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class FavoriteViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = serializers.RecipeMinifiedSerializer
+    serializer_class = RecipeMinifiedSerializer
     http_method_names = ['post', 'delete']
     model = Favorite
 
@@ -137,7 +101,7 @@ class ShoppingCartViewSet(FavoriteViewSet):
 
 
 @api_view(['GET'])
-@renderer_classes([utils.PlainTextRenderer])
+@renderer_classes([PlainTextRenderer])
 def download_shopping_cart(request):
     user = request.user
     cart = get_list_or_404(

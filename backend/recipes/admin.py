@@ -1,7 +1,7 @@
 from django.contrib.admin import ModelAdmin, TabularInline, site
 from django.contrib.auth.admin import UserAdmin
 
-from .models import (Ingredient, IngredientsInRecipe, Recipe, Tag,
+from recipes.models import (Ingredient, IngredientsInRecipe, Recipe, Tag,
                      TagsInRecipe, User)
 
 

@@ -1,64 +1,80 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
-    USER = 'user'
-    MODERATOR = 'moderator'
-    ADMIN = 'admin'
-    USERS_ROLES = (
-        (USER, 'Пользователь'),
-        (MODERATOR, 'Модератор'),
-        (ADMIN, 'Администратор'),
-    )
+    """Foodgram User Model"""
+
+    username_validator = UnicodeUsernameValidator()
     email = models.EmailField(
-        'электронная почта',
-        max_length=250,
+        _('email address'),
+        blank=False,
         unique=True,
+        error_messages={
+            'unique': _("Такой email уже используется."),
+        },
+    )
+    username = models.CharField(
+        _('username'),
+        max_length=settings.USER_NAME_MAX_LENGTH,
+        unique=True,
+        help_text=_(
+            'Обязательно к заполнению.'
+            ' <=150 символов. Только буквы, цифры и @/./+/-/_.'
+        ),
+        validators=(username_validator,),
+        error_messages={
+            'unique': _("Это имя занято."),
+        },
     )
     first_name = models.CharField(
-        'имя',
-        max_length=150,
+        _('first name'), max_length=settings.USER_NAME_MAX_LENGTH, blank=False
     )
     last_name = models.CharField(
-        'фамилия',
-        max_length=150,
+        _('last name'), max_length=settings.USER_NAME_MAX_LENGTH, blank=False
     )
-    role = models.CharField(
-        'пользовательская роль',
-        max_length=max(len(role) for role, none_ in USERS_ROLES),
-        choices=USERS_ROLES,
-        default=USER,
+    password = models.CharField(
+        _('password'), max_length=settings.USER_NAME_MAX_LENGTH
     )
-    is_admin = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = 'пользователь'
-        verbose_name_plural = 'пользователи'
-        ordering = ('id',)
-        indexes = [
-            models.Index(fields=['role', ], name='role_idx'),
-        ]
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('username',)
 
 
 class Follow(models.Model):
+    """Follow user to author model"""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='is_subscribed',
-        verbose_name='Кто подписался'
+        related_name='follower',
+        verbose_name='подписчик',
     )
-    following = models.ForeignKey(
+    author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='is_followed',
-        verbose_name='На кого подписался'
+        related_name='following',
+        verbose_name='авторы',
     )
 
     class Meta:
-        ordering = ['id']
-        verbose_name = 'Подписка'
+        verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
 
-    def __str__(self) -> str:
-        return f'Flw: {self.user.username}->{self.following.username}'[:30]
+        constraints = (
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='no_self_following',
+            ),
+            models.UniqueConstraint(
+                fields=('user', 'author'), name='unique_follower'
+            ),
+        )
+
+    def __str__(self):
+        return f'Подписка {self.user} на {self.author}'

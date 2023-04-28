@@ -26,6 +26,8 @@ class RecipeFilter(FilterSet):
 
     def get_is_favorited(self, queryset, name, value):
         user = self.request.user
+        if user.is_anonymous:
+            return Recipe.objects.none()
         if value == 1:
             return queryset.filter(is_favorited__user=user)
         if value == 0:
@@ -34,6 +36,8 @@ class RecipeFilter(FilterSet):
 
     def get_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
+        if user.is_anonymous:
+            return Recipe.objects.none()
         if value == 1:
             return queryset.filter(is_in_shopping_cart__user=user)
         if value == 0:

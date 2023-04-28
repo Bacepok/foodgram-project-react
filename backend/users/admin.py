@@ -1,27 +1,20 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 
-from .models import Follow, User
+from .models import Follow
 
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'username',
-        'email',
-        'first_name',
-        'last_name')
-    search_fields = ('username', 'email')
-    list_filter = ('username', 'email')
-    empty_value_display = '-пусто-'
+User = get_user_model()
 
 
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'following',
-        'user')
-    search_fields = ('following', 'user')
-    list_filter = ('following', 'user')
-    empty_value_display = '-пусто-'
+    list_display = ('id', 'user', 'author')
+    list_display_links = ('user',)
+    list_filter = ('user',)
+    search_fields = ('user', 'author')
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_filter = ('username', 'email')
+    search_fields = ('username', 'email')

@@ -61,6 +61,7 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(
         Tag,
+        through='TagsInRecipe',
         verbose_name='Теги'
     )
 
@@ -124,7 +125,7 @@ class TagsInRecipe(models.Model):
     )
     tag = models.ForeignKey(
         Tag,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='tags_in_recipe',
     )
 
