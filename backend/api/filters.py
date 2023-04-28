@@ -1,41 +1,42 @@
-from django_filters.rest_framework import (AllValuesMultipleFilter, FilterSet,
-                                           NumberFilter)
-from recipes.models import Recipe
+from django.contrib.auth import get_user_model
+from django_filters.rest_framework import FilterSet, filters
+
+from recipes.models import Ingredient, Recipe, Tag
+
+User = get_user_model()
+
+
+class IngredientFilter(FilterSet):
+    name = filters.CharFilter(lookup_expr='startswith')
+
+    class Meta:
+        model = Ingredient
+        fields = ('name',)
 
 
 class RecipeFilter(FilterSet):
-    is_favorited = NumberFilter(
-        method='get_is_favorited',
-    )
-    tags = AllValuesMultipleFilter(
+    tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
-        label='tags',
+        to_field_name='slug',
+        queryset=Tag.objects.all(),
     )
-    is_in_shopping_cart = NumberFilter(
-        method='get_is_in_shopping_cart',
-    )
+
+    is_favorited = filters.BooleanFilter(method='filter_is_favorited')
+    is_in_shopping_cart = filters.BooleanFilter(
+        method='filter_is_in_shopping_cart')
 
     class Meta:
         model = Recipe
-        fields = (
-            'tags',
-            'author',
-            'is_favorited',
-            'is_in_shopping_cart'
-        )
+        fields = ('tags', 'author',)
 
-    def get_is_favorited(self, queryset, name, value):
+    def filter_is_favorited(self, queryset, name, value):
         user = self.request.user
-        if value == 1:
-            return queryset.filter(is_favorited__user=user)
-        if value == 0:
-            return queryset.exclude(is_favorited__user=user)
+        if value and not user.is_anonymous:
+            return queryset.filter(favorites__user=user)
         return queryset
 
-    def get_is_in_shopping_cart(self, queryset, name, value):
+    def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
-        if value == 1:
-            return queryset.filter(is_in_shopping_cart__user=user)
-        if value == 0:
-            return queryset.exclude(is_in_shopping_cart__user=user)
+        if value and not user.is_anonymous:
+            return queryset.filter(shopping_cart__user=user)
         return queryset
