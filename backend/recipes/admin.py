@@ -1,50 +1,59 @@
-from django.contrib import admin
+from django.contrib.admin import ModelAdmin, TabularInline, site
+from django.contrib.auth.admin import UserAdmin
 
-from . import models
-
-
-@admin.register(models.Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'measurement_unit')
-    list_filter = ('name', )
-    search_fields = ('name', )
+from .models import (Ingredient, IngredientsInRecipe, Recipe, Tag,
+                     TagsInRecipe, User)
 
 
-@admin.register(models.Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'color', 'slug')
-    list_editable = ('name', 'color', 'slug')
-    empty_value_display = '-пусто-'
+class RecipeIngredientInline(TabularInline):
+    model = IngredientsInRecipe
+    min_num = 1
 
 
-@admin.register(models.Recipe)
-class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'author', 'in_favorites')
-    list_editable = (
-        'name', 'author'
-    )
-    readonly_fields = ('in_favorites',)
-    list_filter = ('name', 'author', 'tags')
-    empty_value_display = '-пусто-'
-
-    @admin.display(description='В избранном')
-    def in_favorites(self, obj):
-        return obj.favorite_recipe.count()
+class IngredientAdmin(ModelAdmin):
+    list_display = ('id', 'name', 'measurement_unit')
+    list_filter = ('name', 'measurement_unit')
+    list_editable = ('name', 'measurement_unit')
 
 
-@admin.register(models.Recipe_ingredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'recipe', 'ingredient', 'amount')
-    list_editable = ('recipe', 'ingredient', 'amount')
+class RecipeAdmin(ModelAdmin):
+    list_display = ('id', 'name', 'author', 'cooking_time',)
+    search_fields = ('text', 'name')
+    list_editable = ('author', 'name', 'cooking_time')
+    list_filter = ('author', 'name', 'tags')
+    inlines = (RecipeIngredientInline,)
 
 
-@admin.register(models.Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'recipe')
-    list_editable = ('user', 'recipe')
+class TagAdmin(ModelAdmin):
+    list_display = ('id', 'name', 'slug', 'color')
+    list_editable = ('name', 'slug', 'color')
+    search_fields = ('name', 'slug', 'color')
 
 
-@admin.register(models.Shopping_cart)
-class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'recipe')
-    list_editable = ('user', 'recipe')
+class TagsInRecipeAdmin(ModelAdmin):
+    list_display = ('id', 'recipe', 'tag')
+    list_editable = ('recipe', 'tag')
+
+
+class IngredientsInRecipeAdmin(ModelAdmin):
+    list_display = ('id', 'recipe', 'amount', 'ingredient')
+    list_editable = ('recipe', 'amount', 'ingredient')
+
+
+class CustomUserAdmin(UserAdmin):
+    list_filter = UserAdmin.list_filter + ('email', 'username')
+
+
+PAIRS = [
+    (Tag, TagAdmin),
+    (Ingredient, IngredientAdmin),
+    (Recipe, RecipeAdmin),
+    (IngredientsInRecipe, IngredientsInRecipeAdmin),
+    (TagsInRecipe, TagsInRecipeAdmin),
+    (User, CustomUserAdmin),
+]
+
+site.unregister(User)
+
+for i in PAIRS:
+    site.register(*i)

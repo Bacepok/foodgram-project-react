@@ -33,7 +33,6 @@ INSTALLED_APPS = [
     'api',
     'users',
     'recipes',
-    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -115,27 +114,33 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'backend_media')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
+
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-    ],
-    'DEFAULT_PAGINATION_CLASS': [
-        'api.pagination.CustomPaginator',
-    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
-    'SEARCH_PARAM': 'name',
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
 }
 
+if DEBUG:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += ('rest_framework.renderers.BrowsableAPIRenderer',)
+
 DJOSER = {
+    'HIDE_USERS': False,
     'LOGIN_FIELD': 'email',
+    'PERMISSIONS': {
+        'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+    },
+    'SERIALIZERS': {
+        'user': 'api.serializers.CustomUserSerializer',
+        'user_create': 'api.serializers.CustomUserCreateSerializer',
+    },
 }
 
 AUTH_USER_MODEL = "users.User"
-FILE_NAME = 'shopping_cart.txt'
-CORS_ORIGIN_ALLOW_ALL = True
-
-CORS_URLS_REGEX = r'^/api/.*$'
