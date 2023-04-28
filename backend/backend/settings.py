@@ -1,26 +1,22 @@
 import os
-
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
+RUN_LOCAL = False
+
+if RUN_LOCAL:
+    from dotenv import load_dotenv
+    load_dotenv()
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-pekd(*@gn%brcx4puxzje+04=*+b*qwfxy#4v7j#qyw_c7(w5-'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
-
-# Application definition
+CSRF_TRUSTED_ORIGINS = [f'http://{ALLOWED_HOSTS[0]}', f'https://{ALLOWED_HOSTS[0]}']
+USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -105,7 +101,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
