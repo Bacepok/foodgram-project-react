@@ -3,11 +3,11 @@ services:
 
   db:
     image: postgres:13.0-alpine
+    restart: always
     volumes:
       - database:/var/lib/postgresql/data/
     env_file:
       - ./.env
-    restart: always
 
   backend:
     image: bacep/foodgram_backend:latest
