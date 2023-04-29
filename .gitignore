@@ -102,7 +102,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-
+.env
 .venv
 env/
 venv/
@@ -133,3 +133,8 @@ dmypy.json
 
 
 **.vscode
+
+static/
+backend_static/
+backend_media/
+media/
