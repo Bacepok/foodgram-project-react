@@ -3,11 +3,13 @@ services:
 
   db:
     image: postgres:13.0-alpine
-    restart: always
+    environment:
+        POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - database:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    restart: always
 
   backend:
     image: bacep/foodgram_backend:latest
@@ -46,4 +48,4 @@ volumes:
   database:
   static_value:
   media_value:
-  doc:
+  docs:
