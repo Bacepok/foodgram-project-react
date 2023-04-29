@@ -108,7 +108,7 @@ def download_shopping_cart(request):
     user = request.user
     cart = get_list_or_404(
         ShoppingCart.objects.select_related('recipe').prefetch_related(
-            'ingredients'
+            'recipe__ingredients'
         ),
         user=user
     )
