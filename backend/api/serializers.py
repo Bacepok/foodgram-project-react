@@ -111,7 +111,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         validators=(
             MinValueValidator(
                 1,
-                message='Время приготовления должно быть 1 или более.'
+                message='Время приготовления должно быть 1 или более'
             ),
         )
     )

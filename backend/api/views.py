@@ -12,8 +12,11 @@ from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from .filters import RecipeFilter
 from .pagination import PageLimitPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
-from .serializers import TagSerializer, IngredientSerializer, RecipeRetrieveSerializer, RecipeCreateUpdateSerializer, \
-    RecipeMinifiedSerializer
+from .serializers import (TagSerializer,
+                          IngredientSerializer,
+                          RecipeRetrieveSerializer,
+                          RecipeCreateUpdateSerializer,
+                          RecipeMinifiedSerializer)
 from .utils import PlainTextRenderer
 
 
@@ -106,7 +109,7 @@ def download_shopping_cart(request):
     user = request.user
     cart = get_list_or_404(
         ShoppingCart.objects.select_related('recipe').prefetch_related(
-            'recipe__ingredients'
+            'ingredients'
         ),
         user=user
     )
