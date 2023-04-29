@@ -4,11 +4,6 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 RUN_LOCAL = False
 
-if RUN_LOCAL:
-    from dotenv import load_dotenv
-    load_dotenv()
-
-
 SECRET_KEY = 'django-insecure-pekd(*@gn%brcx4puxzje+04=*+b*qwfxy#4v7j#qyw_c7(w5-'
 
 DEBUG = False

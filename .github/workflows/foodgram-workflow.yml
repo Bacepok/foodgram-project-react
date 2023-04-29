@@ -39,8 +39,9 @@ jobs:
         script: |
             sudo docker --version
             sudo docker-compose stop
-            sudo docker-compose rm frontend_foodgram
-            sudo docker-compose rm foodgram_backend
+            sudo docker-compose rm
+            sudo docker image rm bacep/foodgram_backend
+            sudo docker image rm bacep/frontend_foodgram
             sudo rm .env
             sudo touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env 
