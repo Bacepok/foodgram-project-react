@@ -9,8 +9,6 @@
 
 Продуктовый помощник [доступен по адресу](http://51.250.6.123/)
 
-Логин и пароль супер пользователя для доступа в [админку](http://51.250.6.123/admin/) bacep 984357
-
 ## Технологии:
 
 Python, Django, Django Rest Framework, Docker, Gunicorn, NGINX, PostgreSQL, Yandex Cloud
